@@ -1,0 +1,6 @@
+@DiegoAlvarez.Persistence_HostAddress = http://localhost:5071
+
+GET {{DiegoAlvarez.Persistence_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
