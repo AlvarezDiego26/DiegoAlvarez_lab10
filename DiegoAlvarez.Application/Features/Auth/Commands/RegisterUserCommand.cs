@@ -1,24 +1,30 @@
 using DiegoAlvarez.Application.DTOs.Auth;
+using DiegoAlvarez.Application.Exceptions;
 using DiegoAlvarez.Application.Interfaces.UnitOfWork;
 using DiegoAlvarez.Domain.Entities;
+using MediatR;
 
-namespace DiegoAlvarez.Application.UseCases.Auth;
+namespace DiegoAlvarez.Application.Features.Auth.Commands;
 
-public class RegisterUserUseCase
+public record RegisterUserCommand(RegisterRequestDto Dto) : IRequest<RegisterResponseDto>;
+
+internal class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, RegisterResponseDto>
 {
     private readonly IUnitOfWork _uow;
 
-    public RegisterUserUseCase(IUnitOfWork uow)
+    public RegisterUserCommandHandler(IUnitOfWork uow)
     {
         _uow = uow;
     }
 
-    public async Task<RegisterResponseDto> ExecuteAsync(RegisterRequestDto dto)
+    public async Task<RegisterResponseDto> Handle(
+        RegisterUserCommand request,
+        CancellationToken cancellationToken)
     {
-        var exists = await _uow.Users.GetByUsernameAsync(dto.Username);
+        var exists = await _uow.Users.GetByUsernameAsync(request.Dto.Username);
 
         if (exists is not null)
-            throw new Exception("El username ya existe.");
+            throw new ConflictException("El username ya existe.");
 
         var role = await _uow.Roles.GetByNameAsync("User");
 
@@ -36,9 +42,9 @@ public class RegisterUserUseCase
         var user = new User
         {
             UserId = Guid.NewGuid(),
-            Username = dto.Username,
-            Email = dto.Email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+            Username = request.Dto.Username,
+            Email = request.Dto.Email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Dto.Password),
             CreatedAt = DateTime.Now
         };
 
@@ -50,12 +56,10 @@ public class RegisterUserUseCase
         });
 
         await _uow.Users.AddAsync(user);
-
         await _uow.SaveChangesAsync();
 
         return new RegisterResponseDto(
             user.UserId,
-            "Usuario registrado correctamente."
-        );
+            "Usuario registrado correctamente.");
     }
 }

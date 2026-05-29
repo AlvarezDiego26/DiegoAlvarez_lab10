@@ -1,18 +1,23 @@
 using DiegoAlvarez.Application.DTOs.Ticket;
 using DiegoAlvarez.Application.Interfaces.UnitOfWork;
+using MediatR;
 
-namespace DiegoAlvarez.Application.UseCases.Tickets;
+namespace DiegoAlvarez.Application.Features.Tickets.Queries;
 
-public class GetAllTicketsUseCase
+public record GetAllTicketsQuery : IRequest<IEnumerable<TicketDto>>;
+
+internal class GetAllTicketsQueryHandler : IRequestHandler<GetAllTicketsQuery, IEnumerable<TicketDto>>
 {
     private readonly IUnitOfWork _uow;
 
-    public GetAllTicketsUseCase(IUnitOfWork uow)
+    public GetAllTicketsQueryHandler(IUnitOfWork uow)
     {
         _uow = uow;
     }
 
-    public async Task<IEnumerable<TicketDto>> ExecuteAsync()
+    public async Task<IEnumerable<TicketDto>> Handle(
+        GetAllTicketsQuery request,
+        CancellationToken cancellationToken)
     {
         var tickets = await _uow.Tickets.GetAllAsync();
 

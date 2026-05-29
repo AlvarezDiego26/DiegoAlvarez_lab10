@@ -1,5 +1,9 @@
 using System.Text;
+using DiegoAlvarez.Application.Interfaces.Security;
+using DiegoAlvarez.Application.Features.Auth.Commands;
 using DiegoAlvarez.Infrastructure;
+using DiegoAlvarez.Persistence.Middlewares;
+using DiegoAlvarez.Persistence.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -7,6 +11,10 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(RegisterUserCommand).Assembly));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services.AddControllers();
 
@@ -34,9 +42,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "DiegoAlvarez Lab10 - Ticketera API",
+        Title = "DiegoAlvarez Lab11 - Ticketera API",
         Version = "v1",
-        Description = "API con Arquitectura Hexagonal, JWT, Repository y UnitOfWork"
+        Description = "API con Arquitectura Hexagonal, JWT, Repository, UnitOfWork, CQRS y MediatR"
     });
 
     var jwtScheme = new OpenApiSecurityScheme
@@ -63,6 +71,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI();

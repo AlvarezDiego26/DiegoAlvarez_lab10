@@ -1,5 +1,5 @@
 using DiegoAlvarez.Domain.Entities;
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 

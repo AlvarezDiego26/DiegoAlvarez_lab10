@@ -1,6 +1,7 @@
 using DiegoAlvarez.Application.DTOs.Auth;
-using DiegoAlvarez.Application.DTOs.Common;
-using DiegoAlvarez.Application.UseCases.Auth;
+using DiegoAlvarez.Application.Features.Auth.Commands;
+using DiegoAlvarez.Application.Features.Auth.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DiegoAlvarez.Persistence.Controllers;
@@ -9,44 +10,22 @@ namespace DiegoAlvarez.Persistence.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly RegisterUserUseCase _register;
-    private readonly LoginUseCase _login;
+    private readonly IMediator _mediator;
 
-    public AuthController(
-        RegisterUserUseCase register,
-        LoginUseCase login)
+    public AuthController(IMediator mediator)
     {
-        _register = register;
-        _login = login;
+        _mediator = mediator;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequestDto dto)
     {
-        try
-        {
-            var result = await _register.ExecuteAsync(dto);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(
-                new MessageResponseDto(ex.Message));
-        }
+        return Ok(await _mediator.Send(new RegisterUserCommand(dto)));
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequestDto dto)
     {
-        try
-        {
-            var result = await _login.ExecuteAsync(dto);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return Unauthorized(
-                new MessageResponseDto(ex.Message));
-        }
+        return Ok(await _mediator.Send(new LoginQuery(dto)));
     }
 }

@@ -1,6 +1,7 @@
-using System.Security.Claims;
 using DiegoAlvarez.Application.DTOs.Response;
-using DiegoAlvarez.Application.UseCases.Responses;
+using DiegoAlvarez.Application.Features.Responses.Commands;
+using DiegoAlvarez.Application.Features.Responses.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,25 +12,17 @@ namespace DiegoAlvarez.Persistence.Controllers;
 [Authorize]
 public class ResponsesController : ControllerBase
 {
-    private readonly GetResponsesByTicketUseCase _getResponses;
-    private readonly CreateResponseUseCase _createResponse;
+    private readonly IMediator _mediator;
 
-    public ResponsesController(
-        GetResponsesByTicketUseCase getResponses,
-        CreateResponseUseCase createResponse)
+    public ResponsesController(IMediator mediator)
     {
-        _getResponses = getResponses;
-        _createResponse = createResponse;
+        _mediator = mediator;
     }
-
-    private Guid CurrentUserId =>
-        Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet]
     public async Task<IActionResult> GetByTicket(Guid ticketId)
     {
-        var result = await _getResponses.ExecuteAsync(ticketId);
-        return Ok(result);
+        return Ok(await _mediator.Send(new GetResponsesByTicketQuery(ticketId)));
     }
 
     [HttpPost]
@@ -37,18 +30,6 @@ public class ResponsesController : ControllerBase
         Guid ticketId,
         CreateResponseDto dto)
     {
-        try
-        {
-            var responseId = await _createResponse.ExecuteAsync(
-                ticketId,
-                CurrentUserId,
-                dto);
-
-            return Ok(new { responseId });
-        }
-        catch (Exception ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        return Ok(await _mediator.Send(new CreateResponseCommand(ticketId, dto)));
     }
 }
